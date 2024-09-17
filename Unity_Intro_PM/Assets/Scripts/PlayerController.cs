@@ -17,6 +17,14 @@ public class PlayerController : MonoBehaviour
     public int healthRestore = 1;
 
     [Header("Weapon Stats")]
+    public int weaponID = -1;
+    public int fireMode = 0;
+    public float fireRate = 0;
+    public float currentClip = 0;
+    public float clipSize = 0;
+    public float maxAmmo = 0;
+    public float currentAmmo = 0;
+    public float reloadAmt = 0;
     public bool canFire = true;
 
     [Header("Movement Settings")]
@@ -55,6 +63,16 @@ public class PlayerController : MonoBehaviour
         playerCam.transform.localRotation = Quaternion.AngleAxis(camRotation.y, Vector3.left);
         transform.localRotation = Quaternion.AngleAxis(camRotation.x, Vector3.up);
 
+        if (Input.GetMouseButton(0) && canFire && currentClip > 0)
+        {
+            canFire = false;
+            currentClip--;
+            StartCoroutine("cooldownFire");
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+            reloadClip();
+
         Vector3 temp = myRB.velocity;
 
         float verticalMove = Input.GetAxisRaw("Vertical");
@@ -78,19 +96,43 @@ public class PlayerController : MonoBehaviour
                 sprintMode = false;
         }
 
-        if(!sprintMode)
-            temp.x = verticalMove * speed;
-
-        if(sprintMode)
-            temp.x = verticalMove * speed * sprintMultiplier;
-
+        temp.x = verticalMove * speed;
         temp.z = horizontalMove * speed;
 
+        if (sprintMode)
+            temp.x *= sprintMultiplier;
 
         if (Input.GetKeyDown(KeyCode.Space) && Physics.Raycast(transform.position, -transform.up, groundDetectDistance))
             temp.y = jumpHeight;
 
         myRB.velocity = (temp.x * transform.forward) + (temp.z * transform.right) + (temp.y * transform.up);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "weapon")
+        {
+            other.gameObject.transform.position = weaponSlot.position;
+
+            other.gameObject.transform.SetParent(weaponSlot);
+
+            switch(other.gameObject.name)
+            {
+                case "weapon1":
+                    weaponID = 0;
+                    fireMode = 0;
+                    fireRate = 0.25f;
+                    currentClip = 20;
+                    clipSize = 20;
+                    maxAmmo = 400;
+                    currentAmmo = 200;
+                    reloadAmt = 20;
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -105,13 +147,45 @@ public class PlayerController : MonoBehaviour
             Destroy(collision.gameObject);
         }
 
-        if (collision.gameObject.tag == "weapon")
-            collision.gameObject.transform.SetParent(weaponSlot);
+        if ((currentAmmo < maxAmmo) && collision.gameObject.tag == "ammoPickup")
+        {
+            currentAmmo += reloadAmt;
+
+            if (currentAmmo > maxAmmo)
+                currentAmmo = maxAmmo;
+
+            Destroy(collision.gameObject);
+        }
     }
 
-    IEnumerator cooldownFire(float time)
+    public void reloadClip()
     {
-        yield return new WaitForSeconds(time);
+        if (currentClip >= clipSize)
+            return;
+
+        else
+        {
+            float reloadCount = clipSize - currentClip;
+
+            if (currentAmmo < reloadCount)
+            {
+                currentClip += currentAmmo;
+                currentAmmo = 0;
+                return;
+            }
+
+            else
+            {
+                currentClip += reloadCount;
+                currentAmmo -= reloadCount;
+                return;
+            }
+        }
+    }
+
+    IEnumerator cooldownFire()
+    {
+        yield return new WaitForSeconds(fireRate);
         canFire = true;
     }
 }
