@@ -17,6 +17,8 @@ public class PlayerController : MonoBehaviour
     public int healthRestore = 1;
 
     [Header("Weapon Stats")]
+    public GameObject shot;
+    public float shotVel = 0;
     public int weaponID = -1;
     public int fireMode = 0;
     public float fireRate = 0;
@@ -25,6 +27,7 @@ public class PlayerController : MonoBehaviour
     public float maxAmmo = 0;
     public float currentAmmo = 0;
     public float reloadAmt = 0;
+    public float bulletLifespan = 0;
     public bool canFire = true;
 
     [Header("Movement Settings")]
@@ -63,8 +66,12 @@ public class PlayerController : MonoBehaviour
         playerCam.transform.localRotation = Quaternion.AngleAxis(camRotation.y, Vector3.left);
         transform.localRotation = Quaternion.AngleAxis(camRotation.x, Vector3.up);
 
-        if (Input.GetMouseButton(0) && canFire && currentClip > 0)
+        if (Input.GetMouseButton(0) && canFire && currentClip > 0 && weaponID >= 0)
         {
+            GameObject s = Instantiate(shot, weaponSlot.position, weaponSlot.rotation);
+            s.GetComponent<Rigidbody>().AddForce(playerCam.transform.forward * shotVel);
+            Destroy(s,bulletLifespan);
+
             canFire = false;
             currentClip--;
             StartCoroutine("cooldownFire");
@@ -112,14 +119,16 @@ public class PlayerController : MonoBehaviour
     {
         if (other.gameObject.tag == "weapon")
         {
-            other.gameObject.transform.position = weaponSlot.position;
+            other.gameObject.transform.SetPositionAndRotation(weaponSlot.position, weaponSlot.rotation);
 
             other.gameObject.transform.SetParent(weaponSlot);
 
             switch(other.gameObject.name)
             {
                 case "weapon1":
+                    
                     weaponID = 0;
+                    shotVel = 10000;
                     fireMode = 0;
                     fireRate = 0.25f;
                     currentClip = 20;
@@ -127,6 +136,7 @@ public class PlayerController : MonoBehaviour
                     maxAmmo = 400;
                     currentAmmo = 200;
                     reloadAmt = 20;
+                    bulletLifespan = 1;
                     break;
 
                 default:
