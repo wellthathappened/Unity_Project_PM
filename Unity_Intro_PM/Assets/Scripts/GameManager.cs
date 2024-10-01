@@ -80,11 +80,13 @@ public class GameManager : MonoBehaviour
 
     public void LoadLevel(int sceneID)
     {
+        Time.timeScale = 1;
         SceneManager.LoadScene(sceneID);
     }
 
     public void RestartLevel()
     {
+        Time.timeScale = 1;
         LoadLevel(SceneManager.GetActiveScene().buildIndex);
     }
 }
