@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     public int healthRestore = 1;
 
     [Header("Weapon Stats")]
+    public AudioSource weaponSpeaker;
     public GameObject shot;
     public float shotVel = 0;
     public int weaponID = -1;
@@ -78,6 +79,7 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetMouseButton(0) && canFire && currentClip > 0 && weaponID >= 0)
             {
+                weaponSpeaker.Play();
                 GameObject s = Instantiate(shot, weaponSlot.position, weaponSlot.rotation);
                 s.GetComponent<Rigidbody>().AddForce(playerCam.transform.forward * shotVel);
                 Destroy(s, bulletLifespan);
@@ -131,9 +133,13 @@ public class PlayerController : MonoBehaviour
     {
         if (other.gameObject.tag == "weapon")
         {
+
+
             other.gameObject.transform.SetPositionAndRotation(weaponSlot.position, weaponSlot.rotation);
 
             other.gameObject.transform.SetParent(weaponSlot);
+
+            weaponSpeaker = other.gameObject.GetComponent<AudioSource>();
 
             switch(other.gameObject.name)
             {
